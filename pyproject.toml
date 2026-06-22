@@ -1,0 +1,46 @@
+[project]
+name = "dvp-fastapi"
+version = "0.1.0"
+description = "Multi-Tenant SaaS Digital Verification Portal (DVP) Backend API"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "gunicorn>=26.0.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "psycopg[binary]>=3.2.0",
+    "alembic>=1.13.0",
+    "pydantic[email]>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-jose[cryptography]>=3.3.0",
+    "pwdlib>=0.2.0",
+    "motor>=3.5.0",
+    "redis[hiredis]>=5.1.0",
+    "arq>=0.26.0",
+    "openpyxl>=3.1.0",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6.0",
+    "mypy>=1.11.0",
+    "coverage>=7.6.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["app/tests"]
+
+[tool.alembic]
+script_location = "alembic"
