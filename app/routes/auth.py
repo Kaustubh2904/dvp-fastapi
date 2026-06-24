@@ -5,19 +5,45 @@ from app.core.database.postgres import get_db
 from app.core.dependencies.dependencies import get_current_user, require_employee
 from app.schemas.auth import (
     LoginRequest, Token, TokenRefreshRequest, OTPGenerateRequest, OTPLoginRequest,
-    ForgotPasswordRequest, ResetPasswordRequest, ChangePasswordRequest, UserResponse
+    ForgotPasswordRequest, ResetPasswordRequest, ChangePasswordRequest, UserResponse,
+    CompanyRegistrationRequest
 )
 from app.services.auth_service import auth_service
 from app.repositories.user_repository import user_repository
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.core.security.security import hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+@router.post("/register-company", response_model=Token, status_code=status.HTTP_201_CREATED)
+async def register_company(obj_in: CompanyRegistrationRequest, db: AsyncSession = Depends(get_db)):
+    """SaaS self-serve onboarding. Creates a Company and its root Admin user."""
+    return await auth_service.register_saas_company(db, obj_in=obj_in)
+
+
 @router.post("/login", response_model=Token)
 async def login(obj_in: LoginRequest, db: AsyncSession = Depends(get_db)):
     user = await auth_service.authenticate(db, email=obj_in.email, password=obj_in.password)
+    if user.role == UserRole.SUPERADMIN:
+        # Stealthy rejection for superadmin trying to use normal portal
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+    return await auth_service.generate_tokens(user)
+
+
+@router.post("/login-superadmin", response_model=Token)
+async def login_superadmin(obj_in: LoginRequest, db: AsyncSession = Depends(get_db)):
+    """Secret portal for Superadmin login only."""
+    user = await auth_service.authenticate(db, email=obj_in.email, password=obj_in.password)
+    if user.role != UserRole.SUPERADMIN:
+        # Stealthy rejection for normal users trying to use superadmin portal
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
     return await auth_service.generate_tokens(user)
 
 

@@ -7,6 +7,7 @@ from app.models.user import User, UserRole
 from app.schemas.department import DepartmentCreate, DepartmentUpdate, DepartmentResponse
 from app.services.department_service import department_service
 from app.repositories.department_repository import department_repository
+from app.repositories.employee_repository import employee_repository
 
 router = APIRouter(prefix="/departments", tags=["Departments"])
 
@@ -74,4 +75,60 @@ async def delete_department(
 
     await verify_tenant_access(dept.company_id, current_user=current_user)
     await department_service.delete_department(db, department_id=department_id, actor_id=current_user.id)
+    return None
+
+
+@router.post("/{department_id}/employees/{employee_id}", response_model=DepartmentResponse, dependencies=[require_admin()])
+async def assign_employee_to_department(
+    department_id: int,
+    employee_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Assign an employee to a specific department."""
+    dept = await department_repository.get(db, department_id)
+    if not dept:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Department not found")
+
+    await verify_tenant_access(dept.company_id, current_user=current_user)
+
+    employee = await employee_repository.get(db, employee_id)
+    if not employee or employee.company_id != dept.company_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Employee not found or does not belong to this company"
+        )
+
+    await employee_repository.update(db, db_obj=employee, obj_in={"department_id": department_id})
+    return dept
+
+
+@router.delete("/{department_id}/employees/{employee_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[require_admin()])
+async def remove_employee_from_department(
+    department_id: int,
+    employee_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Remove an employee from a specific department."""
+    dept = await department_repository.get(db, department_id)
+    if not dept:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Department not found")
+
+    await verify_tenant_access(dept.company_id, current_user=current_user)
+
+    employee = await employee_repository.get(db, employee_id)
+    if not employee or employee.company_id != dept.company_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Employee not found or does not belong to this company"
+        )
+        
+    if employee.department_id != department_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Employee does not belong to this department"
+        )
+
+    await employee_repository.update(db, db_obj=employee, obj_in={"department_id": None})
     return None

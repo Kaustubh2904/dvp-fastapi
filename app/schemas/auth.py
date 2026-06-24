@@ -68,3 +68,11 @@ class ResetPasswordRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str = Field(..., min_length=6)
+
+
+class CompanyRegistrationRequest(BaseModel):
+    company_name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    password: str = Field(..., min_length=6)
+    plan_name: str  # SMALL, MEDIUM, LARGE, CUSTOM

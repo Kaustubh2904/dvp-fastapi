@@ -13,15 +13,6 @@ from app.repositories.company_repository import company_repository
 router = APIRouter(prefix="/companies", tags=["Companies"])
 
 
-@router.post("", response_model=CompanyResponse, dependencies=[require_superadmin()])
-async def create_company(
-    obj_in: CompanyCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    return await company_service.create_company(db, obj_in=obj_in, actor_id=current_user.id)
-
-
 @router.get("", response_model=list[CompanyResponse], dependencies=[require_superadmin()])
 async def list_companies(
     skip: int = Query(0, ge=0),

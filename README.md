@@ -137,6 +137,8 @@ All APIs are prefixed with `/api/v1` (as configured in `settings.py`). FastAPI a
 *   `GET /{department_id}`: Get specific department details.
 *   `PUT /{department_id}`: Update department information. *(Requires Admin)*
 *   `DELETE /{department_id}`: Remove a department. *(Requires Admin)*
+*   `POST /{department_id}/employees/{employee_id}`: Assign an employee to the department. *(Requires Admin)*
+*   `DELETE /{department_id}/employees/{employee_id}`: Remove an employee from the department. *(Requires Admin)*
 
 ### 👥 Employees (`/api/v1/employees`)
 *   `POST /`: Create a new employee invite. *(Requires Admin)*

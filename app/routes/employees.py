@@ -105,6 +105,7 @@ async def update_employee_profile(
                 detail="Access Denied: You can only update your own profile.",
             )
         obj_in.status = None
+        obj_in.department_id = None
 
     employee = await employee_repository.get(db, employee_id)
     if not employee:

@@ -103,10 +103,55 @@ app.include_router(chat_router, prefix=settings.API_V1_STR)
 app.include_router(websocket_router)
 
 
+@app.get("/health")
+async def health_check():
+    """Deep health check endpoint for monitoring tools."""
+    from sqlalchemy import text
+    from app.core.database.postgres import engine
+    from app.core.database.redis import redis_client
+    
+    health_status = {"status": "healthy", "components": {}}
+    status_code = status.HTTP_200_OK
+
+    # Check PostgreSQL
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        health_status["components"]["postgres"] = "ok"
+    except Exception as e:
+        health_status["components"]["postgres"] = "down"
+        health_status["status"] = "unhealthy"
+        status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
+    # Check Redis
+    try:
+        if redis_client and await redis_client.ping():
+            health_status["components"]["redis"] = "ok"
+        else:
+            health_status["components"]["redis"] = "down"
+            health_status["status"] = "unhealthy"
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    except Exception as e:
+        health_status["components"]["redis"] = "down"
+        health_status["status"] = "unhealthy"
+        status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
+    # Check MongoDB
+    mongo_ok = await check_mongo_connection()
+    if mongo_ok:
+        health_status["components"]["mongodb"] = "ok"
+    else:
+        health_status["components"]["mongodb"] = "down"
+        health_status["status"] = "unhealthy"
+        status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
+    return JSONResponse(status_code=status_code, content=health_status)
+
+
 @app.get("/")
 async def root():
     return {
-        "status": "healthy",
+        "status": "online",
         "service": settings.PROJECT_NAME,
         "api_docs": "/docs",
     }

@@ -67,6 +67,75 @@ class AuthService:
         return await AuthService.generate_tokens(user)
 
     @staticmethod
+    async def register_saas_company(db: AsyncSession, obj_in: "CompanyRegistrationRequest") -> Token:
+        from app.schemas.auth import CompanyRegistrationRequest
+        from app.models.company import Company, BillingStatus
+        from app.schemas.company import CompanyCreate
+        from app.repositories.company_repository import company_repository
+        
+        # Check if email is used
+        user = await user_repository.get_by_email(db, obj_in.email)
+        if user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is already registered",
+            )
+            
+        # Determine plan
+        plan = obj_in.plan_name.upper()
+        if plan == "SMALL":
+            employee_limit = 10
+        elif plan == "MEDIUM":
+            employee_limit = 50
+        elif plan == "LARGE":
+            employee_limit = 250
+        elif plan == "CUSTOM":
+            employee_limit = 1000
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid plan name. Choose SMALL, MEDIUM, LARGE, or CUSTOM.",
+            )
+            
+        # 1. Create Company
+        company_in = CompanyCreate(
+            company_name=obj_in.company_name,
+            email=obj_in.email,
+            phone=obj_in.phone,
+            subscription_plan=plan,
+            employee_limit=employee_limit,
+            billing_status=BillingStatus.ACTIVE,
+            is_active=True
+        )
+        # Using the repository will add it to the session and flush
+        company = await company_repository.create(db, obj_in=company_in)
+        
+        # 2. Create Admin User
+        admin_user = User(
+            email=obj_in.email,
+            password_hash=hash_password(obj_in.password),
+            role=UserRole.ADMIN,
+            company_id=company.id,
+            is_active=True,
+            is_verified=True
+        )
+        db.add(admin_user)
+        await db.commit()
+        await db.refresh(admin_user)
+        
+        # Log audit
+        await audit_log_service.log_action(
+            db=db,
+            actor_id=admin_user.id,
+            action="COMPANY_SAAS_REGISTRATION",
+            entity_type="Company",
+            entity_id=company.id,
+        )
+        
+        # Return login tokens
+        return await AuthService.generate_tokens(admin_user)
+
+    @staticmethod
     async def generate_otp(db: AsyncSession, email: str, background_tasks: Optional[BackgroundTasks] = None) -> str:
         code = f"{random.randint(100000, 999999)}"
         expires_delta = timedelta(minutes=settings.OTP_EXPIRE_MINUTES)
