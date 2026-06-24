@@ -1,6 +1,7 @@
-version: "3.9"
-
 services:
+  # ---------------------------------------------------------------------------
+  # Infrastructure
+  # ---------------------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
     container_name: dvp-postgres
@@ -14,10 +15,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dvp"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   mongodb:
     image: mongo:7
@@ -30,10 +32,11 @@ services:
     volumes:
       - mongodb_data:/data/db
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
 
   redis:
     image: redis:7-alpine
@@ -48,7 +51,33 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 5s
 
+  # ---------------------------------------------------------------------------
+  # Migration runner — runs once then exits (restartPolicy: on-failure)
+  # The app and worker services depend on this completing successfully.
+  # ---------------------------------------------------------------------------
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dvp-migrate
+    restart: on-failure
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/dvp
+      MONGODB_URL: mongodb://mongodb:27017
+      MONGODB_DB: dvp
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: change-this-to-a-secure-random-key-in-production
+      UPLOAD_DIR: /app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["alembic", "upgrade", "head"]
+
+  # ---------------------------------------------------------------------------
+  # API server
+  # ---------------------------------------------------------------------------
   app:
     build:
       context: .
@@ -60,6 +89,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/dvp
       MONGODB_URL: mongodb://mongodb:27017
+      MONGODB_DB: dvp
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: change-this-to-a-secure-random-key-in-production
       UPLOAD_DIR: /app/uploads
@@ -72,12 +102,21 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: >
-      sh -c "
-        alembic upgrade head &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
-      "
+      migrate:
+        condition: service_completed_successfully
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
+      - --workers
+      - "4"
 
+  # ---------------------------------------------------------------------------
+  # ARQ background worker
+  # ---------------------------------------------------------------------------
   worker:
     build:
       context: .
@@ -87,17 +126,18 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/dvp
       MONGODB_URL: mongodb://mongodb:27017
+      MONGODB_DB: dvp
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: change-this-to-a-secure-random-key-in-production
+      UPLOAD_DIR: /app/uploads
     depends_on:
       postgres:
         condition: service_healthy
-      mongodb:
-        condition: service_healthy
       redis:
         condition: service_healthy
-    command: >
-      sh -c "python -m app.tasks.worker"
+      migrate:
+        condition: service_completed_successfully
+    command: ["arq", "app.tasks.worker.WorkerSettings"]
 
 volumes:
   postgres_data:

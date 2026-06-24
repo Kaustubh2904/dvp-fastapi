@@ -1,7 +1,10 @@
 import asyncio
 import logging
 from urllib.parse import urlparse
+
+import arq
 from arq.connections import RedisSettings
+
 from app.core.config.settings import settings
 from app.core.database.postgres import async_session_maker
 from app.services.subscription_service import subscription_service
@@ -10,9 +13,14 @@ from app.services.notification_service import notification_service
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# Job functions
+# ---------------------------------------------------------------------------
+
 async def run_subscription_checks(ctx) -> str:
     """
-    Background job to verify subscription expiries and suspend elapsed accounts.
+    Background job: check subscription expiries and suspend elapsed accounts.
+    Scheduled daily at midnight via ARQ cron.
     """
     logger.info("Starting background subscription validation checks...")
     async with async_session_maker() as db:
@@ -35,6 +43,10 @@ async def send_reset_password_email_job(ctx, email: str, token: str) -> None:
     await notification_service.send_reset_password_email(email, token)
 
 
+# ---------------------------------------------------------------------------
+# Worker lifecycle hooks
+# ---------------------------------------------------------------------------
+
 async def startup(ctx):
     logger.info("ARQ Worker starting up...")
 
@@ -43,8 +55,12 @@ async def shutdown(ctx):
     logger.info("ARQ Worker shutting down...")
 
 
-# Parse Redis settings
+# ---------------------------------------------------------------------------
+# Worker settings
+# ---------------------------------------------------------------------------
+
 url = urlparse(settings.REDIS_URL)
+
 
 class WorkerSettings:
     redis_settings = RedisSettings(
@@ -60,9 +76,7 @@ class WorkerSettings:
         send_otp_email_job,
         send_reset_password_email_job,
     ]
-    # Run subscription checks every 24 hours (86400 seconds)
-    # arq has cron support
+    # Run subscription expiry checks every day at midnight UTC
     cron_jobs = [
-        # Run every day at midnight
-        # arq.cron(run_subscription_checks, hour=0, minute=0)
+        arq.cron(run_subscription_checks, hour=0, minute=0),
     ]
