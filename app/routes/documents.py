@@ -10,6 +10,7 @@ from app.schemas.document import DocumentResponse, DocumentUpdate
 from app.services.document_service import document_service
 from app.repositories.document_repository import document_repository
 from app.repositories.employee_repository import employee_repository
+from app.services.subscription_service import subscription_service
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -26,6 +27,7 @@ async def upload_document(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only Employee users can upload documents to their profile.",
         )
+    await subscription_service.ensure_mutation_allowed(db, current_user.company_id)
 
     return await document_service.upload_document(
         db, employee_id=current_user.id, document_type=document_type, file=file, actor_id=current_user.id
@@ -39,6 +41,7 @@ async def verify_document(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    await subscription_service.ensure_mutation_allowed(db, current_user.company_id)
     doc = await document_repository.get(db, document_id)
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
@@ -58,6 +61,7 @@ async def reject_document(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    await subscription_service.ensure_mutation_allowed(db, current_user.company_id)
     doc = await document_repository.get(db, document_id)
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
@@ -81,6 +85,7 @@ async def fetch_digilocker_document(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only Employee users can link their DigiLocker.",
         )
+    await subscription_service.ensure_mutation_allowed(db, current_user.company_id)
 
     return await document_service.fetch_from_digilocker(
         db, employee_id=current_user.id, document_type=document_type, actor_id=current_user.id

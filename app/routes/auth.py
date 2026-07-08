@@ -36,9 +36,9 @@ async def login(obj_in: LoginRequest, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login-superadmin", response_model=Token)
 async def login_superadmin(obj_in: LoginRequest, db: AsyncSession = Depends(get_db)):
-    """Secret portal for Superadmin login only."""
+    """Portal login for superadmin, marketing, and technical team users."""
     user = await auth_service.authenticate(db, email=obj_in.email, password=obj_in.password)
-    if user.role != UserRole.SUPERADMIN:
+    if user.role not in {UserRole.SUPERADMIN, UserRole.MARKETING, UserRole.TECHNICAL_TEAM}:
         # Stealthy rejection for normal users trying to use superadmin portal
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -72,6 +72,7 @@ class AuthService:
         from app.models.company import Company, BillingStatus
         from app.schemas.company import CompanyCreate
         from app.repositories.company_repository import company_repository
+        from app.services.subscription_service import subscription_service
         
         # Check if email is used
         user = await user_repository.get_by_email(db, obj_in.email)
@@ -81,30 +82,21 @@ class AuthService:
                 detail="Email is already registered",
             )
             
-        # Determine plan
         plan = obj_in.plan_name.upper()
-        if plan == "SMALL":
-            employee_limit = 10
-        elif plan == "MEDIUM":
-            employee_limit = 50
-        elif plan == "LARGE":
-            employee_limit = 250
-        elif plan == "CUSTOM":
-            employee_limit = 1000
-        else:
+        if plan not in {"FREE", "BASIC", "PRO", "PREMIUM", "CUSTOM"}:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid plan name. Choose SMALL, MEDIUM, LARGE, or CUSTOM.",
+                detail="Invalid plan name. Choose FREE, BASIC, PRO, PREMIUM, or CUSTOM.",
             )
             
         # 1. Create Company
         company_in = CompanyCreate(
             company_name=obj_in.company_name,
-            email=obj_in.email,
+            email=obj_in.company_email,
             phone=obj_in.phone,
             subscription_plan=plan,
-            employee_limit=employee_limit,
-            billing_status=BillingStatus.ACTIVE,
+            employee_limit=10,
+            billing_status=BillingStatus.PENDING_APPROVAL,
             is_active=True
         )
         # Using the repository will add it to the session and flush
@@ -112,6 +104,8 @@ class AuthService:
         
         # 2. Create Admin User
         admin_user = User(
+            first_name=obj_in.first_name,
+            last_name=obj_in.last_name,
             email=obj_in.email,
             password_hash=hash_password(obj_in.password),
             role=UserRole.ADMIN,
@@ -122,6 +116,14 @@ class AuthService:
         db.add(admin_user)
         await db.commit()
         await db.refresh(admin_user)
+
+        await subscription_service.initialize_company_subscription(
+            db=db,
+            company=company,
+            admin_user=admin_user,
+            plan_code=plan,
+            actor_id=admin_user.id,
+        )
         
         # Log audit
         await audit_log_service.log_action(

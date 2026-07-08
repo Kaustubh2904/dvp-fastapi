@@ -24,6 +24,7 @@ from app.routes.documents import router as document_router
 from app.routes.subscriptions import router as subscription_router
 from app.routes.notifications import router as notification_router
 from app.routes.chat import router as chat_router
+from app.routes.tickets import router as tickets_router
 from app.routes.websocket import router as websocket_router
 
 # Setup logging
@@ -100,6 +101,7 @@ app.include_router(document_router, prefix=settings.API_V1_STR)
 app.include_router(subscription_router, prefix=settings.API_V1_STR)
 app.include_router(notification_router, prefix=settings.API_V1_STR)
 app.include_router(chat_router, prefix=settings.API_V1_STR)
+app.include_router(tickets_router, prefix=settings.API_V1_STR)
 app.include_router(websocket_router)
 
 

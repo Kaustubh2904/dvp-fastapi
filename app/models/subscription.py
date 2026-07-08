@@ -14,6 +14,8 @@ class Subscription(Base):
     )
     plan_name: Mapped[str] = mapped_column(String(100), default="FREE")
     employee_limit: Mapped[int] = mapped_column(Integer, default=10)
+    scheduled_plan_name: Mapped[str] = mapped_column(String(100), nullable=True)
+    scheduled_effective_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     start_date: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
@@ -21,9 +23,10 @@ class Subscription(Base):
     end_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     billing_status: Mapped[BillingStatus] = mapped_column(
-        Enum(BillingStatus), default=BillingStatus.PENDING, nullable=False
+        Enum(BillingStatus), default=BillingStatus.PENDING_APPROVAL, nullable=False
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    trial_used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False

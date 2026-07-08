@@ -8,6 +8,7 @@ from app.schemas.department import DepartmentCreate, DepartmentUpdate, Departmen
 from app.services.department_service import department_service
 from app.repositories.department_repository import department_repository
 from app.repositories.employee_repository import employee_repository
+from app.services.subscription_service import subscription_service
 
 router = APIRouter(prefix="/departments", tags=["Departments"])
 
@@ -19,6 +20,7 @@ async def create_department(
     current_user: User = Depends(get_current_user),
 ):
     await verify_tenant_access(obj_in.company_id, current_user=current_user)
+    await subscription_service.ensure_mutation_allowed(db, obj_in.company_id)
     return await department_service.create_department(db, obj_in=obj_in, actor_id=current_user.id)
 
 
@@ -58,6 +60,7 @@ async def update_department(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Department not found")
 
     await verify_tenant_access(dept.company_id, current_user=current_user)
+    await subscription_service.ensure_mutation_allowed(db, dept.company_id)
     return await department_service.update_department(
         db, department_id=department_id, obj_in=obj_in, actor_id=current_user.id
     )
@@ -74,6 +77,7 @@ async def delete_department(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Department not found")
 
     await verify_tenant_access(dept.company_id, current_user=current_user)
+    await subscription_service.ensure_mutation_allowed(db, dept.company_id)
     await department_service.delete_department(db, department_id=department_id, actor_id=current_user.id)
     return None
 
@@ -91,6 +95,7 @@ async def assign_employee_to_department(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Department not found")
 
     await verify_tenant_access(dept.company_id, current_user=current_user)
+    await subscription_service.ensure_mutation_allowed(db, dept.company_id)
 
     employee = await employee_repository.get(db, employee_id)
     if not employee or employee.company_id != dept.company_id:
@@ -116,6 +121,7 @@ async def remove_employee_from_department(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Department not found")
 
     await verify_tenant_access(dept.company_id, current_user=current_user)
+    await subscription_service.ensure_mutation_allowed(db, dept.company_id)
 
     employee = await employee_repository.get(db, employee_id)
     if not employee or employee.company_id != dept.company_id:

@@ -69,8 +69,24 @@ def require_superadmin():
     return Depends(RoleChecker([UserRole.SUPERADMIN]))
 
 
+def require_portal_access():
+    return Depends(RoleChecker([UserRole.SUPERADMIN, UserRole.MARKETING, UserRole.TECHNICAL_TEAM]))
+
+
+def require_subscription_portal_access():
+    return Depends(RoleChecker([UserRole.SUPERADMIN, UserRole.MARKETING]))
+
+
+def require_subscription_admin():
+    return Depends(RoleChecker([UserRole.SUPERADMIN]))
+
+
+def require_ticket_portal_access():
+    return Depends(RoleChecker([UserRole.SUPERADMIN, UserRole.TECHNICAL_TEAM]))
+
+
 def require_admin():
-    return Depends(RoleChecker([UserRole.SUPERADMIN, UserRole.ADMIN]))
+    return Depends(RoleChecker([UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.HR]))
 
 
 def require_employee():

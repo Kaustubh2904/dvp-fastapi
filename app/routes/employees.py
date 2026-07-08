@@ -7,6 +7,7 @@ from app.models.user import User, UserRole
 from app.schemas.employee import EmployeeCreate, EmployeeRegister, EmployeeUpdate, EmployeeResponse
 from app.services.employee_service import employee_service
 from app.repositories.employee_repository import employee_repository
+from app.services.subscription_service import subscription_service
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
@@ -24,6 +25,7 @@ async def create_employee(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="SUPERADMIN must create employees via tenant-specific configurations or pass company_id (not allowed in generic manual creation).",
         )
+    await subscription_service.ensure_employee_capacity(db, company_id, increment=1)
 
     return await employee_service.create_employee(
         db, company_id=company_id, obj_in=obj_in, actor_id=current_user.id, background_tasks=background_tasks
@@ -43,6 +45,7 @@ async def bulk_upload_employees(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Global Admins/Superadmins cannot directly bulk upload employees without a tenant scope.",
         )
+    await subscription_service.ensure_mutation_allowed(db, company_id)
 
     file_content = await file.read()
     result = await employee_service.bulk_upload_employees(
@@ -67,6 +70,7 @@ async def register_employee_profile(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only Employee role users can complete registration for themselves.",
         )
+    await subscription_service.ensure_mutation_allowed(db, current_user.company_id)
 
     return await employee_service.register_employee(db, employee_id=current_user.id, obj_in=obj_in)
 

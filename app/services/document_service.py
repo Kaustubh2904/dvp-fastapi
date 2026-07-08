@@ -8,6 +8,7 @@ from app.repositories.document_repository import document_repository
 from app.models.document import Document, DocumentType, VerificationStatus
 from app.schemas.document import DocumentCreate, DocumentUpdate
 from app.services.audit_service import audit_log_service
+from app.services.subscription_service import subscription_service
 
 
 class DocumentService:
@@ -19,6 +20,15 @@ class DocumentService:
         file: UploadFile,
         actor_id: Optional[int] = None,
     ) -> Document:
+        from app.repositories.employee_repository import employee_repository
+        emp = await employee_repository.get(db, employee_id)
+        if not emp:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+        await subscription_service.ensure_mutation_allowed(db, emp.company_id)
+        file.file.seek(0, 2)
+        file_size = file.file.tell()
+        file.file.seek(0)
+        await subscription_service.ensure_document_upload_capacity(db, emp.company_id, storage_bytes=file_size)
         query = select(Document).where(
             and_(Document.employee_id == employee_id, Document.document_type == document_type)
         )
@@ -64,6 +74,8 @@ class DocumentService:
             new_value={"type": document_type.value, "file_name": file.filename},
         )
 
+        await subscription_service.increment_monthly_uploads(db, emp.company_id, storage_bytes=file_size)
+
         return doc
 
     @staticmethod
@@ -73,6 +85,10 @@ class DocumentService:
         doc = await document_repository.get(db, document_id)
         if not doc:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+        from app.repositories.employee_repository import employee_repository
+        emp = await employee_repository.get(db, doc.employee_id)
+        if emp:
+            await subscription_service.ensure_mutation_allowed(db, emp.company_id)
 
         old_val = {"status": doc.verification_status.value}
 
@@ -106,6 +122,10 @@ class DocumentService:
         doc = await document_repository.get(db, document_id)
         if not doc:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+        from app.repositories.employee_repository import employee_repository
+        emp = await employee_repository.get(db, doc.employee_id)
+        if emp:
+            await subscription_service.ensure_mutation_allowed(db, emp.company_id)
 
         old_val = {"status": doc.verification_status.value}
 
@@ -130,6 +150,11 @@ class DocumentService:
     async def fetch_from_digilocker(
         db: AsyncSession, employee_id: int, document_type: DocumentType, actor_id: Optional[int] = None
     ) -> Document:
+        from app.repositories.employee_repository import employee_repository
+        emp = await employee_repository.get(db, employee_id)
+        if emp:
+            await subscription_service.ensure_mutation_allowed(db, emp.company_id)
+            await subscription_service.ensure_document_upload_capacity(db, emp.company_id, storage_bytes=0)
         mock_file_name = f"digilocker_{document_type.value.lower()}.pdf"
         mock_file_url = f"/static/uploads/employee_{employee_id}/{mock_file_name}"
 

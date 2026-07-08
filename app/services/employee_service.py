@@ -15,6 +15,7 @@ from app.models.user import User, UserRole
 from app.core.security.security import hash_password
 from app.services.notification_service import notification_service
 from app.services.audit_service import audit_log_service
+from app.services.subscription_service import subscription_service
 
 
 class EmployeeService:
@@ -23,15 +24,10 @@ class EmployeeService:
         db: AsyncSession, company_id: int, obj_in: EmployeeCreate, actor_id: Optional[int] = None,
         background_tasks: Optional[BackgroundTasks] = None
     ) -> Employee:
+        await subscription_service.ensure_employee_capacity(db, company_id, increment=1)
         company = await company_repository.get(db, company_id)
         if not company:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
-
-        if company.current_employee_count >= company.employee_limit:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Company employee limit reached. Upgrade subscription plan.",
-            )
 
         existing_user = await user_repository.get_by_email(db, obj_in.email)
         if existing_user:
@@ -103,6 +99,7 @@ class EmployeeService:
         db: AsyncSession, company_id: int, file_content: bytes, filename: str,
         actor_id: Optional[int] = None, background_tasks: Optional[BackgroundTasks] = None
     ) -> dict[str, Any]:
+        await subscription_service.ensure_mutation_allowed(db, company_id)
         records = []
         errors = []
 
@@ -201,6 +198,7 @@ class EmployeeService:
         if not employee:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
 
+        await subscription_service.ensure_mutation_allowed(db, employee.company_id)
         user = await user_repository.get(db, employee_id)
         if user:
             user.is_verified = True

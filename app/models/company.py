@@ -6,10 +6,13 @@ from app.models.base import Base
 
 
 class BillingStatus(str, enum.Enum):
+    TRIAL = "TRIAL"
     ACTIVE = "ACTIVE"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    SCHEDULED_CHANGE = "SCHEDULED_CHANGE"
     EXPIRED = "EXPIRED"
-    PENDING = "PENDING"
     SUSPENDED = "SUSPENDED"
+    CANCELLED = "CANCELLED"
 
 
 class Company(Base):
@@ -32,9 +35,11 @@ class Company(Base):
     current_employee_count: Mapped[int] = mapped_column(Integer, default=0)
 
     billing_status: Mapped[BillingStatus] = mapped_column(
-        Enum(BillingStatus), default=BillingStatus.PENDING, nullable=False
+        Enum(BillingStatus), default=BillingStatus.PENDING_APPROVAL, nullable=False
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    trial_used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    last_quota_reset_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False

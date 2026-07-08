@@ -14,8 +14,10 @@ class CompanyBase(BaseModel):
     subscription_start: Optional[datetime] = None
     subscription_end: Optional[datetime] = None
     employee_limit: Optional[int] = 10
-    billing_status: Optional[BillingStatus] = BillingStatus.PENDING
+    billing_status: Optional[BillingStatus] = BillingStatus.PENDING_APPROVAL
     is_active: Optional[bool] = True
+    trial_used: Optional[bool] = False
+    last_quota_reset_at: Optional[datetime] = None
 
 
 class CompanyCreate(CompanyBase):
@@ -33,6 +35,8 @@ class CompanyUpdate(BaseModel):
     employee_limit: Optional[int] = None
     billing_status: Optional[BillingStatus] = None
     is_active: Optional[bool] = None
+    trial_used: Optional[bool] = None
+    last_quota_reset_at: Optional[datetime] = None
 
 
 class CompanyResponse(CompanyBase):

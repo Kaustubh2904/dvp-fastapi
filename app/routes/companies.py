@@ -9,6 +9,7 @@ from app.models.employee import Employee
 from app.schemas.company import CompanyCreate, CompanyUpdate, CompanyResponse, CompanyStatistics
 from app.services.company_service import company_service
 from app.repositories.company_repository import company_repository
+from app.services.subscription_service import subscription_service
 
 router = APIRouter(prefix="/companies", tags=["Companies"])
 
@@ -38,7 +39,9 @@ async def update_company(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if current_user.role == UserRole.ADMIN:
+    if current_user.role != UserRole.SUPERADMIN:
+        await subscription_service.ensure_mutation_allowed(db, company_id)
+    if current_user.role in {UserRole.ADMIN, UserRole.HR}:
         obj_in.subscription_plan = None
         obj_in.employee_limit = None
         obj_in.billing_status = None

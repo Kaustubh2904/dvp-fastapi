@@ -7,7 +7,10 @@ from app.models.base import Base
 
 class UserRole(str, enum.Enum):
     SUPERADMIN = "SUPERADMIN"
+    MARKETING = "MARKETING"
+    TECHNICAL_TEAM = "TECHNICAL_TEAM"
     ADMIN = "ADMIN"
+    HR = "HR"
     EMPLOYEE = "EMPLOYEE"
 
 
@@ -15,6 +18,8 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    first_name: Mapped[str] = mapped_column(String(100), nullable=True)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False)

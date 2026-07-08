@@ -5,6 +5,8 @@ from app.models.user import UserRole
 
 
 class UserBase(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     email: EmailStr
     role: UserRole
     company_id: Optional[int] = None
@@ -17,6 +19,8 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = None
     is_verified: Optional[bool] = None
@@ -72,7 +76,10 @@ class ChangePasswordRequest(BaseModel):
 
 class CompanyRegistrationRequest(BaseModel):
     company_name: str
+    company_email: EmailStr
+    first_name: str
+    last_name: str
     email: EmailStr
     phone: Optional[str] = None
     password: str = Field(..., min_length=6)
-    plan_name: str  # SMALL, MEDIUM, LARGE, CUSTOM
+    plan_name: str  # FREE, BASIC, PRO, PREMIUM, CUSTOM

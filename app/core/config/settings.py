@@ -49,6 +49,24 @@ class Settings(BaseSettings):
     # Mock Email Configuration
     MAIL_FROM: str = "noreply@dvp-portal.com"
     MAIL_SENDER: str = "DVP System"
+    EMAIL_PROVIDER: str = "smtp"
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 1025
+    SMTP_USERNAME: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_USE_TLS: bool = False
+    SMTP_USE_SSL: bool = False
+    EMAIL_QUEUE_RETRY_LIMIT: int = 3
+
+    # Subscription defaults
+    DEFAULT_TRIAL_DAYS: int = 14
+    DEFAULT_BILLING_CYCLE_DAYS: int = 30
+    DEFAULT_EXPIRY_REMINDER_DAYS: int = 7
+    MONTHLY_QUOTA_RESET_DAY: int = 1
+
+    # Initial superadmin bootstrap credentials
+    SUPERADMIN_EMAIL: Optional[str] = None
+    SUPERADMIN_PASSWORD: Optional[str] = None
 
 
 settings = Settings()

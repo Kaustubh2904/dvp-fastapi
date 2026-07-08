@@ -15,3 +15,15 @@ async def check_subscription_expiries() -> dict:
         "notified_companies": notified,
         "suspended_companies": suspended,
     }
+
+
+async def run_monthly_usage_reset() -> dict:
+    async with async_session_maker() as db:
+        reset = await subscription_service.reset_monthly_usage(db)
+    return {"reset_companies": reset}
+
+
+async def run_scheduled_subscription_changes() -> dict:
+    async with async_session_maker() as db:
+        processed = await subscription_service.process_scheduled_changes(db)
+    return {"processed_companies": processed}
