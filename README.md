@@ -114,14 +114,15 @@ FastAPI router definitions grouping the HTTP endpoints by domain. This layer rec
 All APIs are prefixed with `/api/v1` (as configured in `settings.py`). FastAPI automatically generates Swagger documentation available at `http://localhost:8000/docs` while the server is running.
 
 ### 🔐 Authentication (`/api/v1/auth`)
-*   `POST /login`: Authenticate and receive an access token and refresh token.
+*   `POST /login`: Authenticate and receive access + refresh tokens. *(Blocks access returning a 403 if forced password-reset is required)*
 *   `POST /refresh`: Obtain a new access token using a refresh token.
 *   `POST /otp/generate`: Trigger an OTP to be sent to a registered email.
-*   `POST /otp/login`: Authenticate using an email and an OTP.
+*   `POST /otp/login`: Authenticate using an email and an OTP. *(Blocks access returning a 403 if forced password-reset is required)*
 *   `POST /forgot-password`: Generate a password reset link.
-*   `POST /reset-password`: Set a new password using a valid reset token.
+*   `POST /reset-password`: Set a new password using a valid reset token. *(Clears the forced password-reset state)*
 *   `POST /change-password`: Change password for an authenticated user.
 *   `GET /me`: Retrieve the currently authenticated user's profile.
+
 
 ### 🏢 Companies (`/api/v1/companies`)
 *   `POST /`: Register a new company. *(Requires Superadmin)*
@@ -144,8 +145,11 @@ All APIs are prefixed with `/api/v1` (as configured in `settings.py`). FastAPI a
 *   `POST /`: Create a new employee invite. *(Requires Admin)*
 *   `POST /bulk-upload`: Upload a CSV to bulk invite employees. *(Requires Admin)*
 *   `POST /register`: Complete employee registration (accept invite).
-*   `GET /{employee_id}`: Get details of an employee.
-*   `PUT /{employee_id}`: Update an employee's details.
+*   `GET /{employee_id}`: Get details of an employee. *(Notes field visible to Admin/HR roles only)*
+*   `PUT /{employee_id}`: Update an employee's details. *(Notes field modifiable by Admin/HR roles only)*
+*   `POST /{employee_id}/upload-letters`: Upload unique Offer and Joining Letters for the candidate. *(Requires Admin)*
+*   `POST /{employee_id}/send-letters`: Dispatch the uploaded Offer and Joining Letters to the candidate via email. *(Requires Admin, requires all employee docs to be verified)*
+
 
 ### 📄 Documents & Verification (`/api/v1/documents`)
 *   `POST /upload`: Upload a verification document (AADHAAR, PAN, etc.) for an employee.

@@ -35,6 +35,7 @@ class EmployeeUpdate(BaseModel):
     joining_date: Optional[date] = None
     department_id: Optional[int] = None
     status: Optional[EmployeeStatus] = None
+    notes: Optional[str] = None
 
 
 class EmployeeRegister(BaseModel):
@@ -56,8 +57,13 @@ class EmployeeResponse(EmployeeBase):
     email: EmailStr
     registration_completed: bool
     status: EmployeeStatus
+    notes: Optional[str] = None
+    offer_letter_url: Optional[str] = None
+    joining_letter_url: Optional[str] = None
+    letters_sent: bool = False
     created_at: datetime
     updated_at: datetime
+
 
     class Config:
         from_attributes = True

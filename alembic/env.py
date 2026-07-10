@@ -37,7 +37,7 @@ logger = logging.getLogger("alembic.env")
 from app.core.config.settings import settings  # noqa: E402
 
 # Override the blank sqlalchemy.url from alembic.ini with the real URL.
-config.set_main_option("sqlalchemy.url", settings.get_database_url)
+config.set_main_option("sqlalchemy.url", settings.get_database_url.replace("%", "%%"))
 
 # ---------------------------------------------------------------------------
 # Import ALL models so Base.metadata is fully populated for autogenerate.

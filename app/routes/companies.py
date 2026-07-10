@@ -82,6 +82,7 @@ async def list_company_employees(
             "registration_completed": emp.registration_completed,
             "joining_date": emp.joining_date,
             "department_id": emp.department_id,
+            "notes": emp.notes,
         }
         for emp in employees
     ]

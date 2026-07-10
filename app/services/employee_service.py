@@ -16,7 +16,8 @@ from app.core.security.security import hash_password
 from app.services.notification_service import notification_service
 from app.services.audit_service import audit_log_service
 from app.services.subscription_service import subscription_service
-
+from datetime import datetime, timezone
+from app.core.config.settings import settings
 
 class EmployeeService:
     @staticmethod
@@ -46,6 +47,7 @@ class EmployeeService:
             company_id=company_id,
             is_active=True,
             is_verified=False,
+            must_change_password=True,
         )
         db.add(user)
         await db.commit()
@@ -75,6 +77,24 @@ class EmployeeService:
             new_value={"email": obj_in.email, "company_id": company_id},
         )
 
+        # Generate a one-time password-reset token to embed in the onboarding email.
+        # The employee MUST use this token via POST /auth/reset-password before they
+        # can log in — the temporary password alone does not grant access.
+        import secrets as _secrets
+        from datetime import timedelta
+        from app.models.password_reset import PasswordResetToken
+        from app.repositories.user_repository import password_reset_token_repository
+
+        reset_token_value = _secrets.token_urlsafe(32)
+        reset_expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.RESET_TOKEN_EXPIRE_MINUTES)
+        reset_record = PasswordResetToken(
+            user_id=user.id,
+            token=reset_token_value,
+            expires_at=reset_expires_at,
+        )
+        db.add(reset_record)
+        await db.commit()
+
         from app.tasks.queue import enqueue_task
         from app.tasks.worker import send_onboarding_email_job
         if background_tasks:
@@ -84,12 +104,14 @@ class EmployeeService:
                 email=obj_in.email,
                 first_name=obj_in.first_name,
                 temp_pass=temp_pass,
+                reset_token=reset_token_value,
             )
         else:
             await notification_service.send_onboarding_email(
                 email=obj_in.email,
                 first_name=obj_in.first_name,
                 temp_pass=temp_pass,
+                reset_token=reset_token_value,
             )
 
         return employee

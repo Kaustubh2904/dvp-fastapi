@@ -40,6 +40,10 @@ class Employee(Base):
     status: Mapped[EmployeeStatus] = mapped_column(
         Enum(EmployeeStatus), default=EmployeeStatus.PENDING_INVITE, nullable=False
     )
+    notes: Mapped[str] = mapped_column(String(2000), nullable=True)
+    offer_letter_url: Mapped[str] = mapped_column(String(500), nullable=True)
+    joining_letter_url: Mapped[str] = mapped_column(String(500), nullable=True)
+    letters_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False

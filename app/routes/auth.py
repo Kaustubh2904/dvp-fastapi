@@ -31,6 +31,11 @@ async def login(obj_in: LoginRequest, db: AsyncSession = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
+    if user.must_change_password:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must reset your password before logging in. Please use the reset token sent to your email.",
+        )
     return await auth_service.generate_tokens(user)
 
 
@@ -80,6 +85,12 @@ async def otp_login(obj_in: OTPLoginRequest, db: AsyncSession = Depends(get_db))
     if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired OTP"
+        )
+
+    if user.must_change_password:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must reset your password before logging in. Please use the reset token sent to your email.",
         )
 
     return await auth_service.generate_tokens(user)

@@ -92,6 +92,9 @@ async def get_employee_details(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
 
     await verify_tenant_access(employee.company_id, current_user=current_user)
+    if current_user.role == UserRole.EMPLOYEE:
+        # Prevent employees from reading admin-only notes
+        employee.notes = None
     return employee
 
 
@@ -110,10 +113,132 @@ async def update_employee_profile(
             )
         obj_in.status = None
         obj_in.department_id = None
+        obj_in.notes = None
 
     employee = await employee_repository.get(db, employee_id)
     if not employee:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
 
     await verify_tenant_access(employee.company_id, current_user=current_user)
-    return await employee_repository.update(db, db_obj=employee, obj_in=obj_in)
+    updated = await employee_repository.update(db, db_obj=employee, obj_in=obj_in)
+    
+    # Strip notes from response if the requester is an employee
+    if current_user.role == UserRole.EMPLOYEE:
+        updated.notes = None
+    return updated
+
+
+@router.post(
+    "/{employee_id}/upload-letters",
+    response_model=EmployeeResponse,
+    dependencies=[require_admin()],
+)
+async def upload_offer_joining_letters(
+    employee_id: int,
+    offer_letter: UploadFile = File(..., description="Offer Letter PDF"),
+    joining_letter: UploadFile = File(..., description="Joining Letter PDF"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Admin/HR uploads the company-specific Offer Letter and Joining Letter
+    for a particular employee. Both files are required.
+    """
+    employee = await employee_repository.get(db, employee_id)
+    if not employee:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+    await verify_tenant_access(employee.company_id, current_user=current_user)
+
+    from app.core.security.storage import storage_service
+
+    folder = f"employee_{employee_id}/letters"
+    offer_url = await storage_service.upload_file(offer_letter, folder=folder)
+    joining_url = await storage_service.upload_file(joining_letter, folder=folder)
+
+    employee.offer_letter_url = offer_url
+    employee.joining_letter_url = joining_url
+    db.add(employee)
+    await db.commit()
+    await db.refresh(employee)
+
+    from app.services.audit_service import audit_log_service
+    await audit_log_service.log_action(
+        db=db,
+        actor_id=current_user.id,
+        action="UPLOAD_OFFER_JOINING_LETTERS",
+        entity_type="Employee",
+        entity_id=employee_id,
+        new_value={"offer_letter_url": offer_url, "joining_letter_url": joining_url},
+    )
+
+    return employee
+
+
+@router.post(
+    "/{employee_id}/send-letters",
+    dependencies=[require_admin()],
+)
+async def send_offer_joining_letters(
+    employee_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Admin/HR triggers sending the uploaded Offer and Joining Letters to the
+    employee's email. Requires that both letters have been uploaded and all
+    employee documents are verified.
+    """
+    employee = await employee_repository.get(db, employee_id)
+    if not employee:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+    await verify_tenant_access(employee.company_id, current_user=current_user)
+
+    if not employee.offer_letter_url or not employee.joining_letter_url:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Offer Letter and Joining Letter must be uploaded before sending.",
+        )
+
+    if employee.letters_sent:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Letters have already been sent to this employee.",
+        )
+
+    # Verify all documents are verified
+    from app.repositories.document_repository import document_repository
+    from app.models.document import VerificationStatus
+    all_docs = await document_repository.get_by_employee(db, employee_id)
+    if not all_docs:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Employee has no uploaded documents. All documents must be verified before sending letters.",
+        )
+    unverified = [d for d in all_docs if d.verification_status != VerificationStatus.VERIFIED]
+    if unverified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{len(unverified)} document(s) are not yet verified. All documents must be verified before sending letters.",
+        )
+
+    # Send the email
+    from app.services.notification_service import notification_service
+    await notification_service.send_offer_and_joining_letters(
+        email=employee.email,
+        first_name=employee.first_name,
+    )
+
+    employee.letters_sent = True
+    db.add(employee)
+    await db.commit()
+
+    from app.services.audit_service import audit_log_service
+    await audit_log_service.log_action(
+        db=db,
+        actor_id=current_user.id,
+        action="SEND_OFFER_JOINING_LETTERS",
+        entity_type="Employee",
+        entity_id=employee_id,
+    )
+
+    return {"detail": f"Offer and Joining Letters sent successfully to {employee.email}."}

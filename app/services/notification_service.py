@@ -57,13 +57,12 @@ class NotificationService:
         Subject: DVP Portal - Password Reset Link
         Body: Use the token below to reset your password.
         Token: {token}
-        Expires in 15 minutes.
         ==================================================
         """
         print(message, file=sys.stderr)
 
     @staticmethod
-    async def send_onboarding_email(email: str, first_name: str, temp_pass: str) -> None:
+    async def send_onboarding_email(email: str, first_name: str, temp_pass: str, reset_token: Optional[str] = None) -> None:
         message = f"""
         ==================================================
         EMAIL DISPATCH (SIMULATED):
@@ -72,10 +71,35 @@ class NotificationService:
         Body: Hello {first_name},
         An account has been set up for you.
         Temporary Password: {temp_pass}
-        Please log in and update your profile and credentials.
+        
+        Before you can log in, you MUST reset your password using the token below.
+        Password Reset Token: {reset_token}
+        
+        Please use the reset password page or API endpoint with this token.
         ==================================================
         """
         print(message, file=sys.stderr)
+
+    @staticmethod
+    async def send_offer_and_joining_letters(email: str, first_name: str) -> None:
+        message = f"""
+        ==================================================
+        EMAIL DISPATCH (SIMULATED):
+        To: {email}
+        Subject: Congratulations! Your Offer and Joining Letters are here
+        Body: Hello {first_name},
+        
+        We are pleased to inform you that all your uploaded documents have been successfully verified!
+        
+        As a next step, please find your attached:
+        1. Offer Letter
+        2. Joining Letter
+        
+        Welcome to our team!
+        ==================================================
+        """
+        print(message, file=sys.stderr)
+
 
 
 notification_service = NotificationService()

@@ -43,7 +43,11 @@ class AuthService:
         access_payload = {"role": user.role.value, "company_id": user.company_id}
         access = create_access_token(user.id, additional_data=access_payload)
         refresh = create_refresh_token(user.id)
-        return Token(access_token=access, refresh_token=refresh)
+        return Token(
+            access_token=access,
+            refresh_token=refresh,
+            must_change_password=user.must_change_password,
+        )
 
     @staticmethod
     async def refresh_tokens(db: AsyncSession, refresh_token: str) -> Token:
@@ -242,6 +246,7 @@ class AuthService:
             )
 
         user.password_hash = hash_password(obj_in.new_password)
+        user.must_change_password = False
         reset_token.used = True
 
         db.add(user)

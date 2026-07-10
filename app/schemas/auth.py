@@ -31,6 +31,7 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: int
     created_at: datetime
+    must_change_password: bool = False
 
     class Config:
         from_attributes = True
@@ -40,6 +41,7 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    must_change_password: bool = False
 
 
 class TokenRefreshRequest(BaseModel):

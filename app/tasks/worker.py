@@ -53,8 +53,8 @@ async def run_scheduled_changes_job(ctx) -> str:
     return result
 
 
-async def send_onboarding_email_job(ctx, email: str, first_name: str, temp_pass: str) -> None:
-    await notification_service.send_onboarding_email(email, first_name, temp_pass)
+async def send_onboarding_email_job(ctx, email: str, first_name: str, temp_pass: str, reset_token: str = None) -> None:
+    await notification_service.send_onboarding_email(email, first_name, temp_pass, reset_token)
 
 
 async def send_otp_email_job(ctx, email: str, code: str) -> None:

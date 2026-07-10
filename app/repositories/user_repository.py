@@ -46,14 +46,11 @@ class PasswordResetTokenRepository(BaseRepository[PasswordResetToken]):
         super().__init__(PasswordResetToken)
 
     async def get_active_token(self, db: AsyncSession, token: str) -> Optional[PasswordResetToken]:
-        from datetime import datetime, timezone
         from sqlalchemy import and_
-        now = datetime.now(timezone.utc)
         query = select(self.model).where(
             and_(
                 self.model.token == token,
                 self.model.used == False,
-                self.model.expires_at > now,
             )
         )
         result = await db.execute(query)

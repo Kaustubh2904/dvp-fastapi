@@ -60,7 +60,8 @@ The auth service in [app/services/auth_service.py](app/services/auth_service.py)
 - token refresh validation
 - SaaS company registration that creates both the company and the admin user
 - OTP generation and verification
-- forgot-password and reset-password flows
+- forgot-password and reset-password flows (where password-reset tokens are one-time use and do not expire on time limits, ensuring employees can access their onboarding reset links regardless of when they open them)
+- forced employee password reset upon manual/bulk onboarding: newly created employee accounts are initialized with `must_change_password=True` and a generated reset token is sent to their email. The `/auth/login` endpoint restricts active session generation until a password reset consumes the token.
 - audit logging after sensitive actions
 
 Portal access is now role-aware. The user model includes `SUPERADMIN`, `MARKETING`, and `TECHNICAL_TEAM` in addition to the operational `ADMIN` and `EMPLOYEE` roles. The portal login path accepts the portal-facing roles, while the normal login path remains for regular application users.
