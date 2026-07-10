@@ -16,6 +16,11 @@ from app.models.base import Base
 
 
 async def create_superadmin():
+    if not settings.SUPERADMIN_EMAIL or not settings.SUPERADMIN_PASSWORD:
+        raise RuntimeError(
+            "SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD must be set in the environment before seeding the first superadmin."
+        )
+
     engine = create_async_engine(
         settings.get_database_url,
         echo=False,
@@ -37,8 +42,8 @@ async def create_superadmin():
 
         # Create superadmin
         superadmin = User(
-            email="superadmin@dvp.com",
-            password_hash=hash_password("SuperAdmin@123"),
+            email=settings.SUPERADMIN_EMAIL,
+            password_hash=hash_password(settings.SUPERADMIN_PASSWORD),
             role=UserRole.SUPERADMIN,
             company_id=None,
             is_active=True,
@@ -47,9 +52,8 @@ async def create_superadmin():
         session.add(superadmin)
         await session.commit()
         print("Superadmin created successfully!")
-        print(f"Email: superadmin@dvp.com")
-        print(f"Password: SuperAdmin@123")
-        print("Please change the password after first login.")
+        print(f"Email: {settings.SUPERADMIN_EMAIL}")
+        print("Password was read from the environment. Please rotate it after first login.")
 
     await engine.dispose()
 

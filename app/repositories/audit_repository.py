@@ -21,5 +21,18 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         result = await db.execute(query)
         return list(result.scalars().all())
 
+    async def get_by_company(self, db: AsyncSession, company_id: int, skip: int = 0, limit: int = 100) -> list[AuditLog]:
+        from app.models.user import User
+        query = (
+            select(self.model)
+            .join(User, self.model.actor_id == User.id)
+            .where(User.company_id == company_id)
+            .order_by(self.model.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
 
 audit_log_repository = AuditLogRepository()

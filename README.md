@@ -176,6 +176,10 @@ All APIs are prefixed with `/api/v1` (as configured in `settings.py`). FastAPI a
 *   `PUT /users/{user_id}`: Modify a user's role or status. *(Requires Superadmin)*
 *   `DELETE /users/{user_id}`: Hard delete a user from the system. *(Requires Superadmin)*
 
+### 🔍 Audit Logs (`/api/v1/audit`)
+*   `GET /all`: Fetch all global audit logs on the platform with filters. *(Requires Superadmin)*
+*   `GET /company/{company_id}`: Fetch audit logs specific to a company. *(Requires Admin, HR, or Superadmin)*
+
 ### 💬 Chat & Websockets
 *   `GET /api/v1/chat/conversations`: Get all chat conversations for the user.
 *   `GET /api/v1/chat/conversations/{conversation_id}/messages`: Retrieve chat history for a specific conversation.
