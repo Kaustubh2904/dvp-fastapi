@@ -2,6 +2,7 @@ from typing import Any, Generic, TypeVar, Union, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database.postgres import Base
+from sqlalchemy.orm import DeclarativeBase
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -28,6 +29,14 @@ class BaseRepository(Generic[ModelType]):
             obj_data = obj_in.model_dump()
         elif isinstance(obj_in, dict):
             obj_data = obj_in
+        elif isinstance(obj_in, DeclarativeBase):
+            # Handle SQLAlchemy model instances by extracting column data
+            # Exclude auto-increment primary keys that haven't been assigned yet
+            obj_data = {
+                c.key: getattr(obj_in, c.key)
+                for c in obj_in.__table__.columns
+                if not (c.primary_key and c.autoincrement and getattr(obj_in, c.key) is None)
+            }
         else:
             obj_data = dict(obj_in)
             

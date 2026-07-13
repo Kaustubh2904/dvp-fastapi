@@ -94,6 +94,7 @@ class AuthService:
             )
             
         # 1. Create Company
+        from datetime import timedelta
         company_in = CompanyCreate(
             company_name=obj_in.company_name,
             email=obj_in.company_email,
@@ -101,7 +102,8 @@ class AuthService:
             subscription_plan=plan,
             employee_limit=10,
             billing_status=BillingStatus.PENDING_APPROVAL,
-            is_active=True
+            is_active=True,
+            subscription_end=datetime.now(timezone.utc) + timedelta(days=settings.DEFAULT_TRIAL_DAYS),
         )
         # Using the repository will add it to the session and flush
         company = await company_repository.create(db, obj_in=company_in)

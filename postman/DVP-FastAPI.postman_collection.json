@@ -1,0 +1,862 @@
+{
+  "info": {
+    "name": "DVP FastAPI API",
+    "description": "Postman collection for the Digital Verification Portal backend API.\n\nImport this collection together with the matching environment file in the same folder.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "api_version", "value": "/api/v1", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "refresh_token", "value": "", "type": "string" },
+    { "key": "company_id", "value": "1", "type": "string" },
+    { "key": "employee_id", "value": "1", "type": "string" },
+    { "key": "department_id", "value": "1", "type": "string" },
+    { "key": "document_id", "value": "1", "type": "string" },
+    { "key": "notification_id", "value": "1", "type": "string" },
+    { "key": "subscription_id", "value": "1", "type": "string" },
+    { "key": "request_id", "value": "1", "type": "string" },
+    { "key": "plan_id", "value": "1", "type": "string" },
+    { "key": "user_id", "value": "1", "type": "string" },
+    { "key": "ticket_id", "value": "TICKET-001", "type": "string" },
+    { "key": "conversation_id", "value": "conv-001", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Company",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_name\": \"Acme Pvt Ltd\",\n  \"company_email\": \"admin@acme.test\",\n  \"first_name\": \"Asha\",\n  \"last_name\": \"Kumar\",\n  \"email\": \"admin@acme.test\",\n  \"phone\": \"9999999999\",\n  \"password\": \"Password123!\",\n  \"plan_name\": \"FREE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/register-company",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "register-company"]
+            },
+            "description": "Self-serve company onboarding. Saves tokens into the active environment when successful."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.access_token) pm.environment.set('access_token', data.access_token);",
+                  "  if (data.refresh_token) pm.environment.set('refresh_token', data.refresh_token);",
+                  "  if (typeof data.must_change_password !== 'undefined') pm.environment.set('must_change_password', String(data.must_change_password));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@acme.test\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "login"]
+            },
+            "description": "Portal login for normal tenant users. Saves tokens into the active environment when successful."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.access_token) pm.environment.set('access_token', data.access_token);",
+                  "  if (data.refresh_token) pm.environment.set('refresh_token', data.refresh_token);",
+                  "  if (typeof data.must_change_password !== 'undefined') pm.environment.set('must_change_password', String(data.must_change_password));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Superadmin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@dvp.test\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/login-superadmin",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "login-superadmin"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.access_token) pm.environment.set('access_token', data.access_token);",
+                  "  if (data.refresh_token) pm.environment.set('refresh_token', data.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "refresh"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.access_token) pm.environment.set('access_token', data.access_token);",
+                  "  if (data.refresh_token) pm.environment.set('refresh_token', data.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generate OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@acme.test\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/otp/generate",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "otp", "generate"]
+            }
+          }
+        },
+        {
+          "name": "OTP Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@acme.test\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/otp/login",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "otp", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.access_token) pm.environment.set('access_token', data.access_token);",
+                  "  if (data.refresh_token) pm.environment.set('refresh_token', data.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@acme.test\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset-token-here\",\n  \"new_password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"old_password\": \"Password123!\",\n  \"new_password\": \"Password1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}{{api_version}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["{{api_version}}", "auth", "me"]
+            }
+          }
+          ,
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.id) pm.environment.set('user_id', String(data.id));",
+                  "  if (data.company_id) pm.environment.set('company_id', String(data.company_id));",
+                  "  if (data.role === 'EMPLOYEE' && data.id) pm.environment.set('employee_id', String(data.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Companies",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "List Companies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/companies?skip=0&limit=100", "host": ["{{base_url}}"], "path": ["{{api_version}}", "companies"], "query": [{"key":"skip","value":"0"},{"key":"limit","value":"100"}] }
+          }
+        },
+        {
+          "name": "Get Company",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/companies/{{company_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "companies", "{{company_id}}"] }
+          }
+        },
+        {
+          "name": "Update Company",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"company_name\": \"Acme Pvt Ltd\",\n  \"phone\": \"9999999999\",\n  \"address\": \"Bengaluru\",\n  \"gst_number\": \"29ABCDE1234F1Z5\",\n  \"subscription_plan\": \"PRO\",\n  \"employee_limit\": 50,\n  \"billing_status\": \"ACTIVE\",\n  \"is_active\": true\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/companies/{{company_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "companies", "{{company_id}}"] }
+          }
+        },
+        {
+          "name": "Company Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/companies/{{company_id}}/statistics", "host": ["{{base_url}}"], "path": ["{{api_version}}", "companies", "{{company_id}}", "statistics"] }
+          }
+        },
+        {
+          "name": "Company Employees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/companies/{{company_id}}/employees?skip=0&limit=100", "host": ["{{base_url}}"], "path": ["{{api_version}}", "companies", "{{company_id}}", "employees"], "query": [{"key":"skip","value":"0"},{"key":"limit","value":"100"}] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Departments",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Operations\",\n  \"description\": \"Operations department\",\n  \"company_id\": {{company_id}}\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/departments", "host": ["{{base_url}}"], "path": ["{{api_version}}", "departments"] }
+          }
+        },
+        {
+          "name": "List Company Departments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/departments/company/{{company_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "departments", "company", "{{company_id}}"] }
+          }
+        },
+        {
+          "name": "Get Department",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/departments/{{department_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "departments", "{{department_id}}"] }
+          }
+        },
+        {
+          "name": "Update Department",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"People Ops\",\n  \"description\": \"Updated department\"\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/departments/{{department_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "departments", "{{department_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Department",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/departments/{{department_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "departments", "{{department_id}}"] }
+          }
+        },
+        {
+          "name": "Assign Employee",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/departments/{{department_id}}/employees/{{employee_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "departments", "{{department_id}}", "employees", "{{employee_id}}"] }
+          }
+        },
+        {
+          "name": "Remove Employee",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/departments/{{department_id}}/employees/{{employee_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "departments", "{{department_id}}", "employees", "{{employee_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"first_name\": \"Rahul\",\n  \"last_name\": \"Sharma\",\n  \"email\": \"rahul.sharma@acme.test\",\n  \"department_id\": {{department_id}}\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/employees", "host": ["{{base_url}}"], "path": ["{{api_version}}", "employees"] }
+          }
+        },
+        {
+          "name": "Bulk Upload Employees",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}{{api_version}}/employees/bulk-upload", "host": ["{{base_url}}"], "path": ["{{api_version}}", "employees", "bulk-upload"] }
+          }
+        },
+        {
+          "name": "Register Employee Profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"employee_code\": \"EMP-001\",\n  \"phone\": \"9999999999\",\n  \"gender\": \"Male\",\n  \"date_of_birth\": \"1992-01-01\",\n  \"address\": \"Bengaluru\",\n  \"joining_date\": \"2026-08-01\"\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/employees/register", "host": ["{{base_url}}"], "path": ["{{api_version}}", "employees", "register"] }
+          }
+        },
+        {
+          "name": "Get Employee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/employees/{{employee_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "employees", "{{employee_id}}"] }
+          }
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"first_name\": \"Rahul\",\n  \"last_name\": \"Sharma\",\n  \"phone\": \"9999999999\",\n  \"gender\": \"Male\",\n  \"department_id\": {{department_id}},\n  \"notes\": \"Candidate note\"\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/employees/{{employee_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "employees", "{{employee_id}}"] }
+          }
+        },
+        {
+          "name": "Upload Offer and Joining Letters",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "offer_letter", "type": "file", "src": "" },
+                { "key": "joining_letter", "type": "file", "src": "" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}{{api_version}}/employees/{{employee_id}}/upload-letters", "host": ["{{base_url}}"], "path": ["{{api_version}}", "employees", "{{employee_id}}", "upload-letters"] }
+          }
+        },
+        {
+          "name": "Send Offer and Joining Letters",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/employees/{{employee_id}}/send-letters", "host": ["{{base_url}}"], "path": ["{{api_version}}", "employees", "{{employee_id}}", "send-letters"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Upload Document",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "document_type", "type": "text", "value": "AADHAR" },
+                { "key": "file", "type": "file", "src": "" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}{{api_version}}/documents/upload", "host": ["{{base_url}}"], "path": ["{{api_version}}", "documents", "upload"] }
+          }
+        },
+        {
+          "name": "Verify Document",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "remarks", "type": "text", "value": "Looks valid" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}{{api_version}}/documents/{{document_id}}/verify", "host": ["{{base_url}}"], "path": ["{{api_version}}", "documents", "{{document_id}}", "verify"] }
+          }
+        },
+        {
+          "name": "Reject Document",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "remarks", "type": "text", "value": "Image is unclear" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}{{api_version}}/documents/{{document_id}}/reject", "host": ["{{base_url}}"], "path": ["{{api_version}}", "documents", "{{document_id}}", "reject"] }
+          }
+        },
+        {
+          "name": "DigiLocker Fetch",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "document_type", "type": "text", "value": "AADHAR" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}{{api_version}}/documents/digilocker-fetch", "host": ["{{base_url}}"], "path": ["{{api_version}}", "documents", "digilocker-fetch"] }
+          }
+        },
+        {
+          "name": "List Employee Documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/documents/employee/{{employee_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "documents", "employee", "{{employee_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/notifications?skip=0&limit=100", "host": ["{{base_url}}"], "path": ["{{api_version}}", "notifications"], "query": [{"key":"skip","value":"0"},{"key":"limit","value":"100"}] }
+          }
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/notifications/read-all", "host": ["{{base_url}}"], "path": ["{{api_version}}", "notifications", "read-all"] }
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/notifications/{{notification_id}}/read", "host": ["{{base_url}}"], "path": ["{{api_version}}", "notifications", "{{notification_id}}", "read"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "List Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/plans", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "plans"] }
+          }
+        },
+        {
+          "name": "Create Plan",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"PRO\",\n  \"name\": \"Pro\",\n  \"description\": \"Pro tier\",\n  \"max_admins\": 5,\n  \"max_employees\": 250,\n  \"monthly_document_uploads\": 5000,\n  \"storage_mb\": 10240,\n  \"chat_access\": true,\n  \"api_access\": true,\n  \"analytics_access\": true,\n  \"ticket_priority\": \"HIGH\",\n  \"white_label_support\": true,\n  \"audit_log_retention_days\": 365,\n  \"billing_cycle_days\": 30,\n  \"trial_days\": 14,\n  \"price_cents\": 49900,\n  \"is_active\": true,\n  \"is_custom\": false\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/plans", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "plans"] }
+          }
+        },
+        {
+          "name": "Update Plan",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Pro Plus\",\n  \"price_cents\": 59900,\n  \"is_active\": true\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/plans/{{plan_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "plans", "{{plan_id}}"] }
+          }
+        },
+        {
+          "name": "My Subscription",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/mine", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "mine"] }
+          }
+        },
+        {
+          "name": "Create Subscription",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"plan_name\": \"PRO\",\n  \"employee_limit\": 250,\n  \"end_date\": \"2026-12-31T23:59:59Z\",\n  \"company_id\": {{company_id}},\n  \"billing_status\": \"ACTIVE\",\n  \"is_active\": true\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions"] }
+          }
+        },
+        {
+          "name": "Update Subscription",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"plan_name\": \"PRO\",\n  \"employee_limit\": 500,\n  \"is_active\": true\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/{{subscription_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "{{subscription_id}}"] }
+          }
+        },
+        {
+          "name": "Create Subscription Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"requested_plan_code\": \"PRO\",\n  \"request_type\": \"UPGRADE\",\n  \"notes\": \"Need more seats\",\n  \"immediate_effect\": false\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/requests", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "requests"] }
+          }
+        },
+        {
+          "name": "List Subscription Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/requests?skip=0&limit=100", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "requests"], "query": [{"key":"skip","value":"0"},{"key":"limit","value":"100"}] }
+          }
+        },
+        {
+          "name": "Get Subscription Request",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/requests/{{request_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "requests", "{{request_id}}"] }
+          }
+        },
+        {
+          "name": "Review Subscription Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"decision\": \"APPROVE\",\n  \"review_notes\": \"Approved for upgrade\",\n  \"force_immediate\": true\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/requests/{{request_id}}/review", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "requests", "{{request_id}}", "review"] }
+          }
+        },
+        {
+          "name": "Dashboard Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/dashboard", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "dashboard"] }
+          }
+        },
+        {
+          "name": "Expiring Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/expiring?days=7", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "expiring"], "query": [{"key":"days","value":"7"}] }
+          }
+        },
+        {
+          "name": "Trigger Checks",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/subscriptions/trigger-checks", "host": ["{{base_url}}"], "path": ["{{api_version}}", "subscriptions", "trigger-checks"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Superadmin",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/superadmin/users?skip=0&limit=100", "host": ["{{base_url}}"], "path": ["{{api_version}}", "superadmin", "users"], "query": [{"key":"skip","value":"0"},{"key":"limit","value":"100"}] }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"first_name\": \"Super\",\n  \"last_name\": \"Admin\",\n  \"email\": \"new.admin@dvp.test\",\n  \"role\": \"ADMIN\",\n  \"company_id\": {{company_id}},\n  \"is_active\": true,\n  \"is_verified\": true,\n  \"password\": \"Password123!\"\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/superadmin/users", "host": ["{{base_url}}"], "path": ["{{api_version}}", "superadmin", "users"] }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"first_name\": \"Updated\",\n  \"is_active\": true,\n  \"role\": \"HR\"\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/superadmin/users/{{user_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "superadmin", "users", "{{user_id}}"] }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/superadmin/users/{{user_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "superadmin", "users", "{{user_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Get All Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/audit/all?skip=0&limit=100", "host": ["{{base_url}}"], "path": ["{{api_version}}", "audit", "all"], "query": [{"key":"skip","value":"0"},{"key":"limit","value":"100"}] }
+          }
+        },
+        {
+          "name": "Get Company Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/audit/company/{{company_id}}?skip=0&limit=100", "host": ["{{base_url}}"], "path": ["{{api_version}}", "audit", "company", "{{company_id}}"], "query": [{"key":"skip","value":"0"},{"key":"limit","value":"100"}] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "List Conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/chat/conversations", "host": ["{{base_url}}"], "path": ["{{api_version}}", "chat", "conversations"] }
+          }
+        },
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/chat/conversations/{{conversation_id}}/messages?skip=0&limit=50", "host": ["{{base_url}}"], "path": ["{{api_version}}", "chat", "conversations", "{{conversation_id}}", "messages"], "query": [{"key":"skip","value":"0"},{"key":"limit","value":"50"}] }
+          }
+        },
+        {
+          "name": "Mark Conversation Read",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/chat/conversations/{{conversation_id}}/read", "host": ["{{base_url}}"], "path": ["{{api_version}}", "chat", "conversations", "{{conversation_id}}", "read"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tickets",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Create Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"subject\": \"Need access to reports\",\n  \"description\": \"Please grant access to the reports section.\",\n  \"priority\": \"MEDIUM\"\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/tickets", "host": ["{{base_url}}"], "path": ["{{api_version}}", "tickets"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.ticket_id) pm.environment.set('ticket_id', data.ticket_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+          }
+        },
+        {
+          "name": "List Tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/tickets?skip=0&limit=100", "host": ["{{base_url}}"], "path": ["{{api_version}}", "tickets"], "query": [{"key":"skip","value":"0"},{"key":"limit","value":"100"}] }
+          }
+        },
+        {
+          "name": "Get Ticket",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}{{api_version}}/tickets/{{ticket_id}}", "host": ["{{base_url}}"], "path": ["{{api_version}}", "tickets", "{{ticket_id}}"] }
+          }
+        },
+        {
+          "name": "Reply to Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"We are looking into this.\"\n}" },
+            "url": { "raw": "{{base_url}}{{api_version}}/tickets/{{ticket_id}}/reply", "host": ["{{base_url}}"], "path": ["{{api_version}}", "tickets", "{{ticket_id}}", "reply"] }
+          }
+        }
+      ]
+    }
+  ]
+}
