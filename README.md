@@ -15,6 +15,7 @@ The project follows a robust, multi-layered, asynchronous architecture using the
 *   **ARQ:** High-performance asynchronous job queues leveraging Redis for background tasks (e.g., sending emails, running daily subscription chron jobs).
 *   **SQLAlchemy 2.0 (Async):** Next-generation asynchronous ORM connecting to PostgreSQL via the `psycopg3` driver.
 *   **Alembic:** Database migration tool mapping Python SQLAlchemy models to PostgreSQL DDL schemas.
+*   **Cryptography (Fernet):** Symmetric encryption engine used to secure DigiLocker access/refresh tokens at rest.
 *   **Docker & Docker Compose:** Containerization stack.
 
 ---
@@ -76,25 +77,30 @@ The source code sits inside the `app/` directory and follows a strict layered ar
 Defines the structure of PostgreSQL tables using SQLAlchemy 2.0 Declarative mapping.
 *   `base.py`: The `DeclarativeBase` all models inherit from.
 *   `user.py`, `role.py`: Identity management and role assignments.
-*   `company.py`, `department.py`, `employee.py`: Organizational hierarchy.
+*   `company.py`, `department.py`, `employee.py`: Organizational hierarchy and employee profile (extended with encrypted DigiLocker credential fields).
 *   `subscription.py`: Billing status and tier limits for companies.
 *   `document.py`: Employee background verification documents.
 *   `otp.py`, `password_reset.py`: Ephemeral authentication flow tables.
 *   `notification.py`, `audit_log.py`: System tracking and alerts.
 
 ### `app/schemas/` (Pydantic Models)
-Defines the input validation and output serialization structures (DTOs). Ensures strict typing of HTTP payloads. Separated out by domain (e.g., `auth.py`, `company.py`, `employee.py`).
+Defines the input validation and output serialization structures (DTOs). Ensures strict typing of HTTP payloads. Separated out by domain (e.g., `auth.py`, `company.py`, `employee.py`, `digilocker.py`).
 
 ### `app/repositories/` (Data Access Layer)
 Abstracts complex SQL queries away from business logic.
-*   Each domain entity (e.g., `company_repository.py`) has a repository class containing methods to execute raw SQLAlchemy ORM commands against the Postgres database.
+*   Each domain entity (e.g., `company_repository.py`, `employee_repository.py`) has a repository class containing methods to execute raw SQLAlchemy ORM commands against the Postgres database.
 
 ### `app/services/` (Business Logic Layer)
 Orchestrates the application logic, combining multiple repositories and external services.
-*   e.g., `subscription_service.py` handles the logic of checking employee limits, upgrading tiers, or suspending expired companies. `auth_service.py` handles the complex orchestration of generating an OTP, saving it to Postgres, and enqueueing a Redis background task to email the user.
+*   `subscription_service.py` handles checking employee limits, upgrading tiers, or suspending expired companies.
+*   `auth_service.py` handles generating OTPs, saving them to Postgres, and enqueueing Redis background email tasks.
+*   `digilocker_service.py` manages OAuth 2.0 PKCE flow, token encryption, document fetching, token refresh, and account unlinking with isolated external API calls and graceful fallback when unconfigured.
+
+### `app/utils/` (Utilities & Helpers)
+*   `encryption.py`: Fernet symmetric encryption helper for encrypting sensitive credentials (e.g. DigiLocker access/refresh tokens) at rest.
 
 ### `app/routes/` (Controllers / API Endpoints)
-FastAPI router definitions grouping the HTTP endpoints by domain. This layer receives the HTTP requests, delegates to the `services` layer, and returns the response.
+FastAPI router definitions grouping the HTTP endpoints by domain (`auth.py`, `companies.py`, `employees.py`, `digilocker.py`, `documents.py`, etc.). This layer receives HTTP requests, delegates to the `services` layer, and returns formatted API responses.
 
 ### `app/tasks/` (Background Jobs)
 *   `worker.py`: Entry point for the ARQ worker. Defines the background functions (`send_otp_email_job`, `run_subscription_checks`) and standard daily cron jobs.
@@ -157,6 +163,14 @@ All APIs are prefixed with `/api/v1` (as configured in `settings.py`). FastAPI a
 *   `POST /{document_id}/reject`: Reject an uploaded document with remarks. *(Requires Admin)*
 *   `POST /digilocker-fetch`: Trigger an automated fetch of documents via the DigiLocker integration.
 *   `GET /employee/{employee_id}`: Get all verification documents for a specific employee.
+
+### 🆔 DigiLocker Integration (`/api/v1/digilocker`)
+*   `GET /authorize`: Generate OAuth 2.0 authorization URL for DigiLocker linking with state CSRF protection. *(Requires Employee)*
+*   `GET /callback`: OAuth 2.0 redirect callback endpoint to exchange authorization code for tokens.
+*   `GET /status`: Get current DigiLocker link status, linked timestamp, and token validity for the employee. *(Requires Employee)*
+*   `GET /documents`: Fetch the list of issued documents directly from DigiLocker API. *(Requires Employee)*
+*   `POST /refresh-token`: Refresh expired DigiLocker access token using the stored refresh token. *(Requires Employee)*
+*   `POST /unlink`: Unlink DigiLocker account and clear all stored credentials. *(Requires Employee)*
 
 ### 🔔 Notifications (`/api/v1/notifications`)
 *   `GET /`: Get all notifications for the authenticated user.

@@ -1,8 +1,15 @@
 from datetime import datetime, date, timezone
 import enum
+from typing import Optional
 from sqlalchemy import Integer, String, Boolean, DateTime, Date, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
+
+
+class DigiLockerStatus(str, enum.Enum):
+    LINKED = "LINKED"
+    UNLINKED = "UNLINKED"
+    EXPIRED = "EXPIRED"
 
 
 class EmployeeStatus(str, enum.Enum):
@@ -44,6 +51,14 @@ class Employee(Base):
     offer_letter_url: Mapped[str] = mapped_column(String(500), nullable=True)
     joining_letter_url: Mapped[str] = mapped_column(String(500), nullable=True)
     letters_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # DigiLocker integration fields (encrypted at rest)
+    digilocker_id: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    digilocker_access_token: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    digilocker_refresh_token: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    digilocker_token_expiry: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    digilocker_status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    digilocker_linked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False

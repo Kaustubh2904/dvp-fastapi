@@ -27,6 +27,7 @@ from app.routes.chat import router as chat_router
 from app.routes.tickets import router as tickets_router
 from app.routes.websocket import router as websocket_router
 from app.routes.audit import router as audit_router
+from app.routes.digilocker import router as digilocker_router
 
 # Setup logging
 setup_logging()
@@ -104,6 +105,7 @@ app.include_router(notification_router, prefix=settings.API_V1_STR)
 app.include_router(chat_router, prefix=settings.API_V1_STR)
 app.include_router(tickets_router, prefix=settings.API_V1_STR)
 app.include_router(audit_router, prefix=settings.API_V1_STR)
+app.include_router(digilocker_router, prefix=settings.API_V1_STR)
 app.include_router(websocket_router)
 
 

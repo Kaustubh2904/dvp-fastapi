@@ -70,5 +70,22 @@ class Settings(BaseSettings):
     SUPERADMIN_EMAIL: Optional[str] = None
     SUPERADMIN_PASSWORD: Optional[str] = None
 
+    # DigiLocker OAuth 2.0 Integration
+    DIGILOCKER_CLIENT_ID: Optional[str] = None
+    DIGILOCKER_CLIENT_SECRET: Optional[str] = None
+    DIGILOCKER_REDIRECT_URI: str = "http://localhost:8000/api/v1/digilocker/callback"
+    DIGILOCKER_AUTH_URL: str = "https://digilocker.meripehchaan.gov.in/public/oauth2/1/authorize"
+    DIGILOCKER_TOKEN_URL: str = "https://digilocker.meripehchaan.gov.in/public/oauth2/1/token"
+    DIGILOCKER_API_BASE_URL: str = "https://digilocker.meripehchaan.gov.in/public/oauth2/1"
+    DIGILOCKER_SCOPES: str = "openid"
+
+    # Encryption key for sensitive data (DigiLocker tokens, etc.)
+    FERNET_ENCRYPTION_KEY: Optional[str] = None
+
+    @property
+    def digilocker_configured(self) -> bool:
+        """Returns True when DigiLocker integration has valid credentials configured."""
+        return bool(self.DIGILOCKER_CLIENT_ID and self.DIGILOCKER_CLIENT_SECRET)
+
 
 settings = Settings()

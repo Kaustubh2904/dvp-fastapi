@@ -35,3 +35,13 @@ class ConflictException(HTTPException):
 class TenantAccessException(ForbiddenException):
     def __init__(self, detail: str = "Access denied: You do not belong to this tenant/company"):
         super().__init__(detail=detail)
+
+
+class ServiceUnavailableException(HTTPException):
+    def __init__(self, detail: str = "Service temporarily unavailable"):
+        super().__init__(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=detail)
+
+
+class DigiLockerException(HTTPException):
+    def __init__(self, detail: str = "DigiLocker service error"):
+        super().__init__(status_code=status.HTTP_502_BAD_GATEWAY, detail=detail)

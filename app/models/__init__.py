@@ -3,7 +3,7 @@ from app.models.user import User, UserRole
 from app.models.role import Role
 from app.models.company import Company, BillingStatus
 from app.models.department import Department
-from app.models.employee import Employee, EmployeeStatus
+from app.models.employee import Employee, EmployeeStatus, DigiLockerStatus
 from app.models.subscription import Subscription
 from app.models.subscription_plan import SubscriptionPlan
 from app.models.subscription_request import SubscriptionRequest, SubscriptionRequestStatus, SubscriptionRequestType
@@ -25,6 +25,7 @@ __all__ = [
     "Department",
     "Employee",
     "EmployeeStatus",
+    "DigiLockerStatus",
     "Subscription",
     "SubscriptionPlan",
     "SubscriptionRequest",
